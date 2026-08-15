@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
+
+  --color-ink: #14100f;
+  --color-plum: #241521;
+  --color-plum-2: #33202f;
+  --color-brass: #c7952a;
+  --color-brass-soft: #e8c877;
+  --color-flash: #fff8ed;
+  --color-rose: #a8717a;
+  --color-danger: #e28b8b;
+}
+
+body {
+  background: var(--color-ink);
+}
+
+::selection {
+  background: var(--color-brass);
+  color: var(--color-ink);
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* ---- assinatura visual: borda perfurada de ticket de cinema/fotomatic ---- */
+.ticket-edge {
+  height: 10px;
+  background: radial-gradient(circle at 8px 5px, var(--color-ink) 4px, transparent 4.5px) repeat-x;
+  background-size: 16px 10px;
+}
+
+input[type='text'],
+input[type='tel'],
+input[type='date'],
+input[type='password'],
+textarea {
+  width: 100%;
+  background: var(--color-ink);
+  border: 1px solid rgba(255, 248, 237, 0.14);
+  color: var(--color-flash);
+  border-radius: 10px;
+  padding: 13px 14px;
+  font-size: 15px;
+}
+input[type='text']:focus,
+input[type='tel']:focus,
+input[type='date']:focus,
+input[type='password']:focus,
+textarea:focus {
+  outline: 2px solid var(--color-brass-soft);
+  outline-offset: 1px;
+}
+input::placeholder,
+textarea::placeholder {
+  color: rgba(255, 248, 237, 0.35);
+}
+
+input[type='color'] {
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 248, 237, 0.14);
+  border-top-color: var(--color-brass);
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
