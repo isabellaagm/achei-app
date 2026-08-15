@@ -15,6 +15,7 @@ export type Database = {
           accent_color: string;
           admin_password_hash: string;
           public_base_url: string | null;
+          custom_css: string | null;
           created_at: string;
         };
         Insert: {
@@ -26,6 +27,7 @@ export type Database = {
           accent_color?: string;
           admin_password_hash: string;
           public_base_url?: string | null;
+          custom_css?: string | null;
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['event']['Insert']>;

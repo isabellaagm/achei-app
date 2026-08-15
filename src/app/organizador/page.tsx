@@ -25,6 +25,7 @@ export default async function OrganizadorPage() {
               accentColor: event.accent_color,
               coverUrl,
               publicBaseUrl: event.public_base_url,
+              customCss: event.custom_css,
             }
           : null
       }

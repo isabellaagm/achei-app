@@ -36,3 +36,31 @@ export async function uploadToSignedUrl(url: string, blob: Blob, contentType: st
   const res = await fetch(url, { method: 'PUT', headers: { 'Content-Type': contentType }, body: blob });
   if (!res.ok) throw new Error(`Falha no upload (${res.status})`);
 }
+
+/**
+ * Abre o menu nativo de compartilhar do celular (Web Share API), que no iOS/Android tem a opção
+ * "Salvar imagem"/"Salvar na galeria" — é o único jeito de salvar direto no app de Fotos a partir
+ * do navegador. Se o navegador não suportar, cai pro download normal do arquivo.
+ */
+export async function shareOrDownloadImage(url: string, filename: string) {
+  const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
+  if (nav.canShare && nav.share) {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+      if (nav.canShare({ files: [file] })) {
+        await nav.share({ files: [file] });
+        return;
+      }
+    } catch (e) {
+      if (e instanceof Error && e.name === 'AbortError') return; // usuário cancelou, não faz fallback
+    }
+  }
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}

@@ -15,8 +15,12 @@ create table if not exists event (
   accent_color text default '#C7952A',
   admin_password_hash text not null,
   public_base_url text,           -- preenchido depois do deploy, ex: https://achei-isabella.vercel.app
+  custom_css text,                -- CSS customizado, injetado no site pra personalizar a identidade visual
   created_at timestamptz not null default now()
 );
+
+-- Se você já rodou este schema antes de custom_css existir, esta linha adiciona a coluna sem apagar nada.
+alter table event add column if not exists custom_css text;
 
 create table if not exists photos (
   id uuid primary key default gen_random_uuid(),

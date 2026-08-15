@@ -2,20 +2,37 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getTheEvent } from '@/lib/event';
 import { getAdminSession } from '@/lib/auth';
+import { normalizePhone } from '@/lib/phone';
 
 export async function POST(req: Request) {
   try {
     const { name, phone } = await req.json();
     const cleanName = String(name || '').trim();
-    const cleanPhone = String(phone || '').trim();
-    if (!cleanName || !cleanPhone) {
+    const cleanPhone = normalizePhone(String(phone || ''));
+    if (!cleanName || cleanPhone.length < 12) {
       return NextResponse.json({ error: 'nome e whatsapp são obrigatórios' }, { status: 400 });
     }
 
     const event = await getTheEvent();
     if (!event) return NextResponse.json({ error: 'evento não encontrado' }, { status: 404 });
 
-    const { data, error } = await supabaseAdmin()
+    const db = supabaseAdmin();
+
+    // Se esse telefone já tinha sido importado via CSV (ou já se cadastrou antes), reaproveita a
+    // linha em vez de duplicar — só atualiza o nome.
+    const { data: existing } = await db
+      .from('guests')
+      .select('id')
+      .eq('event_id', event.id)
+      .eq('phone', cleanPhone)
+      .maybeSingle();
+
+    if (existing) {
+      await db.from('guests').update({ name: cleanName }).eq('id', existing.id);
+      return NextResponse.json({ guestId: existing.id });
+    }
+
+    const { data, error } = await db
       .from('guests')
       .insert({ event_id: event.id, name: cleanName, phone: cleanPhone })
       .select('id')

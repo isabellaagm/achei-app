@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, Card, Eyebrow, Label, ErrorText } from '@/components/ui';
+import { Button, Card, Eyebrow, Label, FieldNote, ErrorText } from '@/components/ui';
 import { useToast } from '@/components/Toast';
 import { PublicEvent } from '@/components/EventHero';
+import { uploadToSignedUrl } from '@/lib/image-utils';
 
 export function ConfigTab({ event }: { event: PublicEvent }) {
   const router = useRouter();
@@ -12,10 +13,14 @@ export function ConfigTab({ event }: { event: PublicEvent }) {
   const [name, setName] = useState(event.name);
   const [eventDate, setEventDate] = useState(event.eventDate || '');
   const [location, setLocation] = useState(event.location || '');
+  const [accentColor, setAccentColor] = useState(event.accentColor);
+  const [customCss, setCustomCss] = useState(event.customCss || '');
   const [saving, setSaving] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [wiping, setWiping] = useState(false);
   const [err, setErr] = useState('');
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
   async function save() {
     setSaving(true);
@@ -23,7 +28,7 @@ export function ConfigTab({ event }: { event: PublicEvent }) {
       const res = await fetch('/api/event', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, eventDate, location }),
+        body: JSON.stringify({ name, eventDate, location, accentColor, customCss }),
       });
       if (!res.ok) throw new Error();
       toast('Salvo!');
@@ -32,6 +37,34 @@ export function ConfigTab({ event }: { event: PublicEvent }) {
       toast('Erro ao salvar');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function uploadCover(file: File) {
+    setUploadingCover(true);
+    try {
+      const urlRes = await fetch('/api/upload-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: 'cover' }),
+      });
+      const urlData = await urlRes.json();
+      if (!urlRes.ok) throw new Error(urlData.error || 'falha ao pedir URL de upload');
+
+      await uploadToSignedUrl(urlData.uploadUrl, file, file.type || 'image/jpeg');
+
+      const res = await fetch('/api/event', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ coverKey: urlData.key }),
+      });
+      if (!res.ok) throw new Error();
+      toast('Capa atualizada!');
+      router.refresh();
+    } catch {
+      toast('Erro ao enviar a capa');
+    } finally {
+      setUploadingCover(false);
     }
   }
 
@@ -65,10 +98,49 @@ export function ConfigTab({ event }: { event: PublicEvent }) {
         <Label>Data</Label>
         <input type="date" className="mb-3.5" value={eventDate} onChange={(e) => setEventDate(e.target.value)} />
         <Label>Local</Label>
-        <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} />
+        <input type="text" className="mb-3.5" value={location} onChange={(e) => setLocation(e.target.value)} />
+        <Label>Cor de destaque</Label>
+        <input type="color" value={accentColor} onChange={(e) => setAccentColor(e.target.value)} />
+        <FieldNote>Pinta os botões e o brilho da página em todo o site.</FieldNote>
         <Button onClick={save} disabled={saving} className="mt-3.5">
           {saving ? 'Salvando…' : 'Salvar alterações'}
         </Button>
+      </Card>
+
+      <Card className="mb-4">
+        <Label>Foto de capa</Label>
+        {event.coverUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={event.coverUrl} alt="capa atual" className="mb-3 aspect-video w-full rounded-[14px] object-cover" />
+        )}
+        <input
+          ref={coverInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) uploadCover(file);
+          }}
+        />
+        <Button variant="ghost" onClick={() => coverInputRef.current?.click()} disabled={uploadingCover}>
+          {uploadingCover ? 'Enviando…' : event.coverUrl ? 'Trocar foto de capa' : 'Enviar foto de capa'}
+        </Button>
+      </Card>
+
+      <Card className="mb-4">
+        <Label>CSS customizado</Label>
+        <textarea
+          rows={8}
+          className="font-mono text-xs"
+          placeholder={`.exemplo {\n  /* seu CSS aqui */\n}`}
+          value={customCss}
+          onChange={(e) => setCustomCss(e.target.value)}
+        />
+        <FieldNote>
+          Pra quem sabe CSS: isso é injetado no site inteiro, depois de todo o resto — dá pra sobrescrever qualquer
+          estilo. Fica salvo só depois de clicar em &quot;Salvar alterações&quot; acima.
+        </FieldNote>
       </Card>
 
       <Button variant="ghost" onClick={logout} className="mb-4">

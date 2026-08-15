@@ -17,6 +17,7 @@ export function PhotosTab() {
   const [busy, setBusy] = useState(false);
   const [busyMsg, setBusyMsg] = useState('');
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [selectedCount, setSelectedCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
 
@@ -65,6 +66,7 @@ export function PhotosTab() {
       setProgress({ done: files.length, total: files.length });
       toast('Fotos processadas!');
       if (fileInputRef.current) fileInputRef.current.value = '';
+      setSelectedCount(0);
       await loadPhotos();
     } finally {
       setBusy(false);
@@ -130,14 +132,24 @@ export function PhotosTab() {
     <div>
       <Card className="mb-4">
         <Label>Enviar fotos do evento</Label>
-        <input ref={fileInputRef} type="file" accept="image/*" multiple className="mb-1" />
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={(e) => setSelectedCount(e.target.files?.length || 0)}
+        />
+        <Button variant="ghost" onClick={() => fileInputRef.current?.click()} disabled={busy} className="mb-3">
+          📁 {selectedCount ? `${selectedCount} foto${selectedCount !== 1 ? 's' : ''} escolhida${selectedCount !== 1 ? 's' : ''} — trocar` : 'Escolher fotos'}
+        </Button>
         <FieldNote>
           Os arquivos originais são enviados sem nenhuma alteração de qualidade — só a miniatura da galeria é
           comprimida. Cada rosto detectado vira uma &quot;impressão digital&quot; usada pra comparar com as selfies
           dos convidados.
         </FieldNote>
-        <Button onClick={handleUpload} disabled={busy}>
-          {busy ? 'Processando…' : 'Processar e enviar'}
+        <Button onClick={handleUpload} disabled={busy || !selectedCount}>
+          {busy ? 'Processando…' : selectedCount ? `Processar e enviar (${selectedCount})` : 'Processar e enviar'}
         </Button>
       </Card>
 

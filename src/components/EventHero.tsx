@@ -9,6 +9,7 @@ export type PublicEvent = {
   accentColor: string;
   coverUrl: string | null;
   publicBaseUrl: string | null;
+  customCss?: string | null;
 };
 
 export function EventHero({ event, compact = false }: { event: PublicEvent; compact?: boolean }) {

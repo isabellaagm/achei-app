@@ -23,6 +23,7 @@ export async function GET() {
         accentColor: event.accent_color,
         coverUrl,
         publicBaseUrl: event.public_base_url,
+        customCss: event.custom_css,
       },
     });
   } catch (err) {
@@ -44,6 +45,7 @@ export async function PATCH(req: Request) {
     if (typeof body.accentColor === 'string') patch.accent_color = body.accentColor;
     if (typeof body.coverKey === 'string') patch.cover_key = body.coverKey;
     if (typeof body.publicBaseUrl === 'string') patch.public_base_url = body.publicBaseUrl.trim();
+    if (typeof body.customCss === 'string' || body.customCss === null) patch.custom_css = body.customCss;
 
     const { error } = await supabaseAdmin().from('event').update(patch).eq('id', session.eventId);
     if (error) throw error;
