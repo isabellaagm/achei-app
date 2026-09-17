@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { EventHero, PublicEvent } from '@/components/EventHero';
 import { Button, Card, Eyebrow, StepRail, StatusLine, ErrorText, Empty, Label } from '@/components/ui';
@@ -9,13 +9,15 @@ import { detectFaces, largestFace, type LoadStatus } from '@/lib/human-client';
 import { fileToImage, resizeToCanvas } from '@/lib/image-utils';
 
 type Match = { photoId: string; score: number; thumbUrl: string; downloadUrl: string };
-type Step = 'landing' | 'register' | 'selfie' | 'results';
+type RosterGuest = { id: string; name: string };
+type Step = 'landing' | 'select-name' | 'selfie' | 'results';
 
 export function GuestApp({ event }: { event: PublicEvent }) {
   const [step, setStep] = useState<Step>('landing');
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [roster, setRoster] = useState<RosterGuest[] | null>(null);
+  const [search, setSearch] = useState('');
   const [guestId, setGuestId] = useState<string | null>(null);
+  const [guestName, setGuestName] = useState('');
   const [embedding, setEmbedding] = useState<number[] | null>(null);
   const [matches, setMatches] = useState<Match[] | null>(null);
   const [confident, setConfident] = useState(true);
@@ -26,6 +28,14 @@ export function GuestApp({ event }: { event: PublicEvent }) {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  useEffect(() => {
+    if (step !== 'select-name' || roster !== null) return;
+    fetch('/api/guests/roster')
+      .then((r) => r.json())
+      .then((d) => setRoster(d.guests || []))
+      .catch(() => setRoster([]));
+  }, [step, roster]);
 
   useEffect(() => {
     if (step !== 'selfie') return;
@@ -43,7 +53,7 @@ export function GuestApp({ event }: { event: PublicEvent }) {
         streamRef.current = stream;
         if (videoRef.current) videoRef.current.srcObject = stream;
       } catch {
-        toast('Câmera indisponível — use "enviar uma foto"');
+        toast('Câmera indisponível — use "escolher da galeria"');
       }
     })();
     return () => {
@@ -53,28 +63,17 @@ export function GuestApp({ event }: { event: PublicEvent }) {
     };
   }, [step, toast]);
 
-  async function registerGuest() {
-    if (!name.trim() || !phone.trim()) {
-      setErr('Preenche nome e WhatsApp, por favor.');
-      return;
-    }
-    setErr('');
-    setBusy(true);
-    try {
-      const res = await fetch('/api/guests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'erro ao cadastrar');
-      setGuestId(data.guestId);
-      setStep('selfie');
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : 'erro ao cadastrar');
-    } finally {
-      setBusy(false);
-    }
+  const filteredRoster = useMemo(() => {
+    if (!roster) return [];
+    const q = search.trim().toLowerCase();
+    if (!q) return roster;
+    return roster.filter((g) => g.name.toLowerCase().includes(q));
+  }, [roster, search]);
+
+  function pickGuest(g: RosterGuest) {
+    setGuestId(g.id);
+    setGuestName(g.name);
+    setStep('selfie');
   }
 
   async function runMatch(canvas: HTMLCanvasElement) {
@@ -117,6 +116,9 @@ export function GuestApp({ event }: { event: PublicEvent }) {
       toast('Câmera ainda não está pronta');
       return;
     }
+    // A pré-visualização é espelhada só visualmente (CSS); o frame real
+    // capturado aqui vem direto do stream, sem espelhar — é o que garante
+    // a melhor comparação no reconhecimento facial.
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -168,42 +170,52 @@ export function GuestApp({ event }: { event: PublicEvent }) {
             <Eyebrow>passo 1 de 3</Eyebrow>
             <h2 className="mb-2 text-2xl">Vamos achar suas fotos</h2>
             <p className="mb-5 text-ink/70">
-              Você vai se identificar, tirar uma selfie rápida, e a gente compara com todas as fotos do evento.
-              Leva menos de um minuto.
+              Você escolhe seu nome na lista, tira uma selfie rápida, e a gente compara com todas as fotos do
+              evento. Leva menos de um minuto.
             </p>
-            <Button onClick={() => setStep('register')}>Começar</Button>
+            <Button onClick={() => setStep('select-name')}>Começar</Button>
             <Link href="/" className="mt-2.5 block">
               <Button variant="ghost">← voltar</Button>
             </Link>
           </>
         )}
 
-        {step === 'register' && (
+        {step === 'select-name' && (
           <>
             <StepRail step={1} />
             <Eyebrow>passo 1 de 3</Eyebrow>
-            <h2 className="mb-3 text-2xl">Como podemos te chamar?</h2>
+            <h2 className="mb-3 text-2xl">Qual é o seu nome?</h2>
             <Card className="mb-4">
-              <Label>Nome</Label>
+              <Label>Buscar</Label>
               <input
                 type="text"
-                className="mb-3.5"
-                placeholder="Seu nome"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                placeholder="Comece a digitar seu nome…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
               />
-              <Label>WhatsApp</Label>
-              <input
-                type="tel"
-                placeholder="(13) 99999-9999"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
+              {roster === null ? (
+                <p className="mt-3 font-body text-sm text-ink/50">Carregando lista…</p>
+              ) : (
+                <div className="mt-3 max-h-72 overflow-y-auto rounded-[10px] border border-border">
+                  {filteredRoster.length === 0 ? (
+                    <p className="p-4 text-center font-body text-sm text-ink/50">Nenhum nome encontrado.</p>
+                  ) : (
+                    filteredRoster.map((g) => (
+                      <button
+                        key={g.id}
+                        onClick={() => pickGuest(g)}
+                        className="block w-full border-b border-border px-4 py-3 text-left font-body text-sm last:border-b-0 hover:bg-surface"
+                      >
+                        {g.name}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
             </Card>
-            <Button onClick={registerGuest} disabled={busy}>
-              {busy ? 'Aguarda…' : 'Continuar'}
-            </Button>
-            {err && <ErrorText>{err}</ErrorText>}
+            <p className="text-center font-body text-xs text-ink/45">
+              Não encontrou seu nome? Fala com a Bell ou o Gui — eles adicionam você na lista.
+            </p>
           </>
         )}
 
@@ -211,31 +223,46 @@ export function GuestApp({ event }: { event: PublicEvent }) {
           <>
             <StepRail step={2} />
             <Eyebrow>passo 2 de 3</Eyebrow>
-            <h2 className="mb-2 text-2xl">Tire uma selfie</h2>
+            <h2 className="mb-1 text-2xl">Oi, {guestName.split(' ')[0]}!</h2>
             <p className="mb-4 text-ink/70">
-              Olhe pra câmera, com boa luz no rosto. A foto não fica pública em lugar nenhum — só usamos pra
-              comparar.
+              Tire uma selfie olhando pra câmera, com boa luz no rosto. A foto não fica pública em lugar nenhum —
+              só usamos pra comparar.
             </p>
             <Card className="p-3">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="aspect-[3/4] w-full rounded-[14px] border border-border bg-black object-cover"
-              />
+              <div className="relative">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="aspect-[3/4] w-full -scale-x-100 rounded-[14px] border border-border bg-black object-cover"
+                />
+              </div>
               <div className="mt-3">
                 <Button onClick={capture} disabled={busy}>
-                  📸 Capturar
+                  📸 Tirar foto agora
                 </Button>
               </div>
-              <div className="mt-2.5 text-center text-xs text-ink/45">
-                Câmera não funciona?{' '}
-                <label htmlFor="selfie-upload" className="cursor-pointer text-azul underline">
-                  envie uma foto
-                </label>
+              <p className="mt-1.5 text-center font-body text-xs text-ink/45">
+                Recomendado — dá mais precisão na busca das suas fotos.
+              </p>
+
+              <div className="my-3 flex items-center gap-3">
+                <div className="h-px flex-1 bg-border" />
+                <span className="font-body text-xs text-ink/40">ou</span>
+                <div className="h-px flex-1 bg-border" />
               </div>
-              <input id="selfie-upload" type="file" accept="image/*" capture="user" className="hidden" onChange={onUploadSelfie} />
+
+              <Button variant="ghost" onClick={() => document.getElementById('selfie-upload')?.click()} disabled={busy}>
+                🖼️ Escolher da galeria
+              </Button>
+              <input
+                id="selfie-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={onUploadSelfie}
+              />
             </Card>
             {busy && <StatusLine>{busyMsg}</StatusLine>}
             {err && <ErrorText>{err}</ErrorText>}

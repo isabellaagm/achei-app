@@ -96,7 +96,7 @@ export type Database = {
           id: string;
           event_id: string;
           name: string;
-          phone: string;
+          phone: string | null;
           matched_photo_ids: string[];
           registered_at: string;
         };
@@ -104,7 +104,7 @@ export type Database = {
           id?: string;
           event_id: string;
           name: string;
-          phone: string;
+          phone?: string | null;
           matched_photo_ids?: string[];
           registered_at?: string;
         };

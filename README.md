@@ -111,8 +111,10 @@ instruções que ele mostra pra conectar (`git remote add origin ...` e
    - Aba **Fotos**: é onde você sobe as fotos que o fotógrafo entregar.
    - Aba **Compartilhar**: tem o QR Code e o link pra mandar pros convidados
      (aponta pra `/convidado`).
-   - Aba **Convidados**: lista quem se cadastrou e quantas fotos cada um
-     achou, com botão de WhatsApp pra avisar.
+   - Aba **Convidados**: cole a lista de nomes (um por linha) ou adicione um
+     de cada vez — é essa lista que o convidado vê na busca pra escolher o
+     próprio nome, sem precisar digitar nada nem duplicar cadastro. Clique
+     no nome de alguém pra ver as fotos que já encontramos pra essa pessoa.
    - Aba **Identidade**: os 7 tons da paleta oficial, prontos pra ajuste
      fino se algum dia quiser — e onde trocar a logo/capa. As fontes não
      aparecem aqui porque são arquivos fixos (ver seção abaixo).
@@ -142,16 +144,18 @@ do casamento, me manda que eu comparo com o `tokens.json` de novo.
 
 1. Suba um lote de fotos quaisquer (podem ser de qualquer evento passado,
    ou fotos de grupo dos seus amigos) na aba Fotos.
-2. Abra `/convidado` em pelo menos **dois celulares diferentes** (um iPhone
+2. Adicione alguns nomes de teste na aba Convidados.
+3. Abra `/convidado` em pelo menos **dois celulares diferentes** (um iPhone
    e um Android, se der — eles se comportam diferente com câmera).
-3. Cadastre-se, tire a selfie, confira se as fotos certas aparecem.
-4. Se ninguém aparecer com boa confiança, ajuste o `MATCH_THRESHOLD` em
+4. Escolha um nome na busca, tire a selfie, confira se as fotos certas
+   aparecem.
+5. Se ninguém aparecer com boa confiança, ajuste o `MATCH_THRESHOLD` em
    `src/lib/match.ts` (hoje em `0.5`, seguindo a recomendação da própria
    biblioteca) — suba um pouco se estiver "achando" fotos erradas, desça um
    pouco se estiver perdendo fotos certas. Depois de mudar, faça
    `git push` de novo pra Vercel atualizar sozinha.
-5. Teste também o fluxo do organizador: apagar uma foto, exportar o CSV de
-   convidados, mandar uma mensagem de WhatsApp de teste.
+6. Teste também o fluxo do organizador: apagar uma foto, adicionar/remover
+   um nome da lista de convidados, ver as fotos de um convidado específico.
 
 Repita esse teste umas 2-3 semanas antes do casamento, e de novo assim que
 o fotógrafo entregar as fotos de verdade.

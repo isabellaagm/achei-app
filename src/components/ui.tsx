@@ -44,7 +44,7 @@ export function Label({ children }: { children: ReactNode }) {
 }
 
 export function FieldNote({ children }: { children: ReactNode }) {
-  return <p className="-mt-2 mb-3.5 font-body text-xs text-ink/50">{children}</p>;
+  return <p className="mt-1.5 mb-3.5 font-body text-xs text-ink/50">{children}</p>;
 }
 
 export function StepRail({ step, of = 3 }: { step: number; of?: number }) {

@@ -46,7 +46,7 @@ export function AdminApp({ event, isAdmin }: { event: PublicEvent | null; isAdmi
         </div>
 
         {tab === 'fotos' && <PhotosTab />}
-        {tab === 'convidados' && <GuestsTab event={event} />}
+        {tab === 'convidados' && <GuestsTab />}
         {tab === 'compartilhar' && <ShareTab event={event} />}
         {tab === 'identidade' && <IdentityTab event={event} />}
         {tab === 'config' && <ConfigTab event={event} />}

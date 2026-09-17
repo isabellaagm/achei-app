@@ -67,11 +67,17 @@ create table if not exists guests (
   id uuid primary key default gen_random_uuid(),
   event_id uuid not null references event(id) on delete cascade,
   name text not null,
-  phone text not null,
+  phone text,
   matched_photo_ids uuid[] not null default '{}',
   registered_at timestamptz not null default now()
 );
 create index if not exists idx_guests_event on guests(event_id);
+
+-- A partir desta versão, o organizador pré-cadastra a lista de convidados
+-- (nome, sem telefone) e cada convidado só ESCOLHE o próprio nome numa
+-- busca — não cria um registro novo. "phone" fica como coluna legada,
+-- sem uso, e sem exigência de preenchimento.
+alter table guests alter column phone drop not null;
 
 -- Row Level Security: todo o acesso passa pelas rotas de API (que usam a
 -- service role key no servidor), então bloqueamos acesso direto do browser.

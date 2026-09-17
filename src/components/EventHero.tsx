@@ -38,7 +38,7 @@ export function EventHero({ event, compact = false }: { event: PublicEventShape;
         </div>
         {!compact && (
           <>
-            <div className="cordao-divider mx-auto mt-5 max-w-[220px]" />
+            <div className="cordao-divider mx-auto mt-6 mb-2 max-w-[340px]" />
             {event.coverUrl ? (
               <div className="relative mt-5 aspect-video w-full overflow-hidden rounded-[16px] border border-border">
                 <Image src={event.coverUrl} alt="capa do evento" fill className="object-cover" unoptimized />
@@ -54,7 +54,7 @@ export function EventHero({ event, compact = false }: { event: PublicEventShape;
           </>
         )}
       </div>
-      {compact && <div className="cordao-divider mx-auto max-w-[160px] pb-1" />}
+      {compact && <div className="cordao-divider mx-auto max-w-[240px] pb-2" />}
     </div>
   );
 }
