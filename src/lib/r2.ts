@@ -36,14 +36,8 @@ export async function getUploadUrl(key: string, contentType: string, expiresIn =
 }
 
 /** URL assinada de DOWNLOAD (GET) — usada pra mostrar/baixar fotos sem tornar o bucket público. */
-export async function getDownloadUrl(key: string, expiresIn = 3600, downloadFilename?: string) {
-  const cmd = new GetObjectCommand({
-    Bucket: BUCKET,
-    Key: key,
-    // Com o arquivo vindo de outro domínio (R2), o atributo `download` do <a> é ignorado pelo
-    // navegador — só forçando o download aqui no header é que ele não abre a imagem numa aba nova.
-    ...(downloadFilename ? { ResponseContentDisposition: `attachment; filename="${downloadFilename}"` } : {}),
-  });
+export async function getDownloadUrl(key: string, expiresIn = 3600) {
+  const cmd = new GetObjectCommand({ Bucket: BUCKET, Key: key });
   return getSignedUrl(r2(), cmd, { expiresIn });
 }
 

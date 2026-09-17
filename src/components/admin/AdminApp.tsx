@@ -7,13 +7,15 @@ import { LoginForm } from './LoginForm';
 import { PhotosTab } from './PhotosTab';
 import { GuestsTab } from './GuestsTab';
 import { ShareTab } from './ShareTab';
+import { IdentityTab } from './IdentityTab';
 import { ConfigTab } from './ConfigTab';
 
-type Tab = 'fotos' | 'convidados' | 'compartilhar' | 'config';
+type Tab = 'fotos' | 'convidados' | 'compartilhar' | 'identidade' | 'config';
 const TABS: { key: Tab; label: string }[] = [
   { key: 'fotos', label: 'Fotos' },
   { key: 'convidados', label: 'Convidados' },
   { key: 'compartilhar', label: 'Compartilhar' },
+  { key: 'identidade', label: 'Identidade' },
   { key: 'config', label: 'Config' },
 ];
 
@@ -32,10 +34,10 @@ export function AdminApp({ event, isAdmin }: { event: PublicEvent | null; isAdmi
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`whitespace-nowrap rounded-full border px-3.5 py-2 font-mono text-xs uppercase tracking-wide transition ${
+              className={`whitespace-nowrap rounded-full border px-3.5 py-2 font-body text-xs font-medium uppercase tracking-wide transition ${
                 tab === t.key
-                  ? 'border-brass bg-brass font-semibold text-ink'
-                  : 'border-white/15 text-white/60 hover:border-white/30'
+                  ? 'border-azul bg-azul font-semibold text-surface-raised'
+                  : 'border-border text-ink/60 hover:border-azul/50'
               }`}
             >
               {t.label}
@@ -46,6 +48,7 @@ export function AdminApp({ event, isAdmin }: { event: PublicEvent | null; isAdmi
         {tab === 'fotos' && <PhotosTab />}
         {tab === 'convidados' && <GuestsTab event={event} />}
         {tab === 'compartilhar' && <ShareTab event={event} />}
+        {tab === 'identidade' && <IdentityTab event={event} />}
         {tab === 'config' && <ConfigTab event={event} />}
       </div>
     </div>

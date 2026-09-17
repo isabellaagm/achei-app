@@ -29,6 +29,8 @@ Você vai precisar criar 3 contas gratuitas (leva uns 15 minutos no total):
 2. No menu lateral, abra **SQL Editor** → **New query**.
 3. Cole o conteúdo inteiro do arquivo [`supabase/schema.sql`](./supabase/schema.sql)
    deste projeto e clique em **Run**. Isso cria as 4 tabelas que o app usa.
+   Se você já tinha rodado uma versão anterior deste schema, pode rodar de
+   novo sem medo — os comandos são seguros de repetir (`if not exists`).
 4. Vá em **Project Settings → API**. Anote:
    - **Project URL** → isso é o `SUPABASE_URL`
    - **service_role key** (na seção "Project API keys", é a chave secreta,
@@ -101,18 +103,42 @@ instruções que ele mostra pra conectar (`git remote add origin ...` e
 ## Passo 5 — criar o evento
 
 1. Acesse `https://SEU-LINK.vercel.app/organizador`.
-2. Preencha nome do casamento, data, local, e escolha uma **senha de
-   organizador** — guarde essa senha, é ela que destrava o painel depois.
-3. Pronto, o evento existe. Agora:
+2. Nome, data e local já vêm preenchidos com os dados de Bell & Gui — confira
+   e ajuste se precisar, e escolha uma **senha de organizador** — guarde
+   essa senha, é ela que destrava o painel depois.
+3. Pronto, o evento existe, já com a identidade visual de vocês aplicada.
+   Agora:
    - Aba **Fotos**: é onde você sobe as fotos que o fotógrafo entregar.
    - Aba **Compartilhar**: tem o QR Code e o link pra mandar pros convidados
      (aponta pra `/convidado`).
    - Aba **Convidados**: lista quem se cadastrou e quantas fotos cada um
      achou, com botão de WhatsApp pra avisar.
+   - Aba **Identidade**: os 7 tons da paleta oficial, prontos pra ajuste
+     fino se algum dia quiser — e onde trocar a logo/capa. As fontes não
+     aparecem aqui porque são arquivos fixos (ver seção abaixo).
 
 ---
 
-## Como testar antes do casamento (faça isso, sério)
+## Identidade visual "Bell & Gui"
+
+Já vem tudo aplicado de fábrica, sem precisar configurar nada:
+
+- **Cores**: a paleta oficial de vocês (`#F5F2EC` fundo, `#050D73` texto, `#344B9B`
+  azul, `#C99A5B` dourado — os mesmos nomes e valores do `tokens.json` da
+  identidade). Editável na aba **Identidade** do painel, se quiser ajustar.
+- **Fontes**: Cinzel, Cinzel Decorative, New Icon Script e Montserrat — os
+  arquivos reais da papelaria de vocês, auto-hospedados em `public/fonts/`
+  (não dependem de nenhum serviço externo, nem no dia do casamento).
+- **Símbolo**: o cordão de três dobras aparece como divisor nas telas de
+  maior destaque.
+- **Logo**: o monograma "BG" (telas internas) e o wordmark "BELL & GUI"
+  (página inicial) — em `public/brand/`. Dá pra substituir por outro
+  arquivo pela aba Identidade, se um dia quiser.
+- **Capa**: enquanto vocês não sobem uma foto de capa, a ilustração do
+  altar (line art) aparece no lugar, só pra não ficar um espaço vazio.
+
+Se algum ajuste de cor não estiver batendo com o que você vê no Figma/Canva
+do casamento, me manda que eu comparo com o `tokens.json` de novo.
 
 1. Suba um lote de fotos quaisquer (podem ser de qualquer evento passado,
    ou fotos de grupo dos seus amigos) na aba Fotos.

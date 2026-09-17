@@ -22,7 +22,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastCtx.Provider value={show}>
       {children}
       <div
-        className={`fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-full bg-brass px-5 py-2.5 text-sm font-semibold text-ink shadow-lg transition-opacity duration-200 ${
+        className={`fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-full bg-azul px-5 py-2.5 font-body text-sm font-semibold text-surface-raised shadow-lg transition-opacity duration-200 ${
           msg ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
       >

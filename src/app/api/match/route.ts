@@ -46,7 +46,7 @@ export async function POST(req: Request) {
         photoId: m.photoId,
         score: m.score,
         thumbUrl: await getDownloadUrl(m.thumbKey, 3600),
-        downloadUrl: await getDownloadUrl(m.originalKey, 3600, `achei-${m.photoId.slice(0, 8)}.jpg`),
+        downloadUrl: await getDownloadUrl(m.originalKey, 3600),
       }))
     );
 

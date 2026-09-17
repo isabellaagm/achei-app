@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { getTheEvent } from '@/lib/event';
+import { getTheEvent, toPublicEvent } from '@/lib/event';
 import { getAdminSession } from '@/lib/auth';
-import { getDownloadUrl } from '@/lib/r2';
 import type { Database } from '@/lib/database.types';
 
 type EventUpdate = Database['public']['Tables']['event']['Update'];
@@ -11,21 +10,7 @@ export async function GET() {
   try {
     const event = await getTheEvent();
     if (!event) return NextResponse.json({ event: null });
-
-    const coverUrl = event.cover_key ? await getDownloadUrl(event.cover_key, 3600) : null;
-
-    return NextResponse.json({
-      event: {
-        id: event.id,
-        name: event.name,
-        eventDate: event.event_date,
-        location: event.location,
-        accentColor: event.accent_color,
-        coverUrl,
-        publicBaseUrl: event.public_base_url,
-        customCss: event.custom_css,
-      },
-    });
+    return NextResponse.json({ event: await toPublicEvent(event) });
   } catch (err) {
     console.error('GET /api/event', err);
     return NextResponse.json({ error: 'erro ao carregar evento' }, { status: 500 });
@@ -43,9 +28,15 @@ export async function PATCH(req: Request) {
     if (typeof body.eventDate === 'string' || body.eventDate === null) patch.event_date = body.eventDate;
     if (typeof body.location === 'string') patch.location = body.location.trim();
     if (typeof body.accentColor === 'string') patch.accent_color = body.accentColor;
+    if (typeof body.colorBg === 'string') patch.color_bg = body.colorBg;
+    if (typeof body.colorSurface === 'string') patch.color_surface = body.colorSurface;
+    if (typeof body.colorText === 'string') patch.color_text = body.colorText;
+    if (typeof body.colorAccentSoft === 'string') patch.color_accent_soft = body.colorAccentSoft;
+    if (typeof body.colorOrnamental === 'string') patch.color_ornamental = body.colorOrnamental;
+    if (typeof body.colorBorder === 'string') patch.color_border = body.colorBorder;
     if (typeof body.coverKey === 'string') patch.cover_key = body.coverKey;
+    if (typeof body.logoKey === 'string') patch.logo_key = body.logoKey;
     if (typeof body.publicBaseUrl === 'string') patch.public_base_url = body.publicBaseUrl.trim();
-    if (typeof body.customCss === 'string' || body.customCss === null) patch.custom_css = body.customCss;
 
     const { error } = await supabaseAdmin().from('event').update(patch).eq('id', session.eventId);
     if (error) throw error;

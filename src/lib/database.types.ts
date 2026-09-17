@@ -13,9 +13,15 @@ export type Database = {
           location: string | null;
           cover_key: string | null;
           accent_color: string;
+          color_bg: string;
+          color_surface: string;
+          color_text: string;
+          color_accent_soft: string;
+          color_ornamental: string;
+          color_border: string;
+          logo_key: string | null;
           admin_password_hash: string;
           public_base_url: string | null;
-          custom_css: string | null;
           created_at: string;
         };
         Insert: {
@@ -25,9 +31,15 @@ export type Database = {
           location?: string | null;
           cover_key?: string | null;
           accent_color?: string;
+          color_bg?: string;
+          color_surface?: string;
+          color_text?: string;
+          color_accent_soft?: string;
+          color_ornamental?: string;
+          color_border?: string;
+          logo_key?: string | null;
           admin_password_hash: string;
           public_base_url?: string | null;
-          custom_css?: string | null;
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['event']['Insert']>;

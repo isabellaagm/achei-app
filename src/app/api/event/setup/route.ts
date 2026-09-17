@@ -19,7 +19,6 @@ export async function POST(req: Request) {
     const password = String(body.password || '');
     const eventDate = body.eventDate ? String(body.eventDate) : null;
     const location = body.location ? String(body.location).trim() : null;
-    const accentColor = body.accentColor ? String(body.accentColor) : '#C7952A';
 
     if (!name || password.length < 4) {
       return NextResponse.json(
@@ -36,7 +35,6 @@ export async function POST(req: Request) {
         name,
         event_date: eventDate,
         location,
-        accent_color: accentColor,
         admin_password_hash: passwordHash,
       })
       .select('*')

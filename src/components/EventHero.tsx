@@ -1,18 +1,11 @@
 import Image from 'next/image';
-import { Eyebrow } from './ui';
+import type { PublicEventShape } from '@/lib/event';
 
-export type PublicEvent = {
-  id: string;
-  name: string;
-  eventDate: string | null;
-  location: string | null;
-  accentColor: string;
-  coverUrl: string | null;
-  publicBaseUrl: string | null;
-  customCss?: string | null;
-};
+// Vários outros arquivos importam o tipo por este caminho — mantém a
+// importação antiga funcionando (@/components/EventHero) sem duplicar o tipo.
+export type { PublicEventShape as PublicEvent } from '@/lib/event';
 
-export function EventHero({ event, compact = false }: { event: PublicEvent; compact?: boolean }) {
+export function EventHero({ event, compact = false }: { event: PublicEventShape; compact?: boolean }) {
   const dateFmt = event.eventDate
     ? new Date(event.eventDate + 'T12:00:00').toLocaleDateString('pt-BR', {
         day: '2-digit',
@@ -21,23 +14,49 @@ export function EventHero({ event, compact = false }: { event: PublicEvent; comp
       })
     : null;
 
+  // Se o casal não subiu uma logo customizada, usa os ativos reais da
+  // identidade Bell & Gui: o wordmark empilhado no hero principal, o
+  // monograma "BG" (mais compacto) nas telas internas.
+  const logoSrc = event.logoUrl || (compact ? '/brand/bg-monograma.png' : '/brand/bell-gui-wordmark.png');
+
   return (
-    <div
-      className={`${compact ? 'px-5 pb-5 pt-7' : 'px-5 pb-8 pt-12'}`}
-      style={{
-        background: `radial-gradient(ellipse at 20% -10%, ${event.accentColor}33 0%, transparent 55%), linear-gradient(180deg, #241521 0%, #14100f 100%)`,
-      }}
-    >
-      <Eyebrow>achei · galeria do evento</Eyebrow>
-      <h1 className={compact ? 'text-[26px]' : 'text-[32px]'}>{event.name}</h1>
-      <div className="mt-2.5 font-mono text-[13px] text-brass-soft">
-        {dateFmt ? `📅 ${dateFmt}` : ''} {event.location ? ` · 📍 ${event.location}` : ''}
-      </div>
-      {!compact && event.coverUrl && (
-        <div className="relative mt-4 aspect-video w-full overflow-hidden rounded-[18px] border border-white/10">
-          <Image src={event.coverUrl} alt="capa do evento" fill className="object-cover" unoptimized />
+    <div>
+      <div
+        className={`${compact ? 'px-5 pb-5 pt-7' : 'px-5 pb-6 pt-10'} text-center`}
+        style={{
+          background: `radial-gradient(ellipse at 50% -20%, ${event.colorOrnamental}22 0%, transparent 60%), var(--color-surface)`,
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={logoSrc}
+          alt={event.name}
+          className={`mx-auto ${compact ? 'h-14' : 'h-28'} w-auto object-contain`}
+        />
+        <div className={`mt-3 font-body ${compact ? 'text-[13px]' : 'text-sm'} text-azul`}>
+          {dateFmt ? `${dateFmt}` : ''} {event.location ? ` · ${event.location}` : ''}
         </div>
-      )}
+        {!compact && (
+          <>
+            <div className="cordao-divider mx-auto mt-5 max-w-[220px]" />
+            {event.coverUrl ? (
+              <div className="relative mt-5 aspect-video w-full overflow-hidden rounded-[16px] border border-border">
+                <Image src={event.coverUrl} alt="capa do evento" fill className="object-cover" unoptimized />
+              </div>
+            ) : (
+              <div className="relative mt-5 aspect-[16/10] w-full overflow-hidden rounded-[16px] border border-border bg-surface-raised">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/brand/altar-cerimonia.png"
+                  alt=""
+                  className="h-full w-full object-cover opacity-90"
+                />
+              </div>
+            )}
+          </>
+        )}
+      </div>
+      {compact && <div className="cordao-divider mx-auto max-w-[160px] pb-1" />}
     </div>
   );
 }

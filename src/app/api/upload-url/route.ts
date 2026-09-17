@@ -16,6 +16,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ key, uploadUrl });
     }
 
+    if (kind === 'logo') {
+      // PNG pra preservar transparência (monogramas geralmente têm fundo transparente)
+      const key = `events/${session.eventId}/logo.png`;
+      const uploadUrl = await getUploadUrl(key, 'image/png');
+      return NextResponse.json({ key, uploadUrl });
+    }
+
     if (kind === 'photo') {
       const photoId = randomUUID();
       const originalKey = `events/${session.eventId}/photos/${photoId}/original.jpg`;

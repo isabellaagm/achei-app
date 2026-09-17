@@ -12,15 +12,37 @@ create table if not exists event (
   event_date date,
   location text,
   cover_key text,                 -- chave do objeto no R2 (capa do evento)
-  accent_color text default '#C7952A',
+  accent_color text default '#344B9B',
   admin_password_hash text not null,
   public_base_url text,           -- preenchido depois do deploy, ex: https://achei-isabella.vercel.app
-  custom_css text,                -- CSS customizado, injetado no site pra personalizar a identidade visual
   created_at timestamptz not null default now()
 );
 
--- Se você já rodou este schema antes de custom_css existir, esta linha adiciona a coluna sem apagar nada.
-alter table event add column if not exists custom_css text;
+-- Identidade visual "Bell & Gui" (paleta + monograma). Em bloco separado
+-- com "add column if not exists" pra ser seguro rodar de novo num banco
+-- que já tinha uma versão anterior da tabela. Os valores default já são
+-- exatamente os do design system oficial do casal (tokens.json).
+alter table event add column if not exists color_bg text not null default '#F5F2EC';
+alter table event add column if not exists color_surface text not null default '#FFFDF9';
+alter table event add column if not exists color_text text not null default '#050D73';
+alter table event add column if not exists color_accent_soft text not null default '#7185B2';
+alter table event add column if not exists color_ornamental text not null default '#C99A5B';
+alter table event add column if not exists color_border text not null default '#DFE2EE';
+alter table event add column if not exists logo_key text;
+
+-- accent_color já existia desde a primeira versão (com outro padrão) — isso
+-- só atualiza o padrão da coluna pra próximos eventos, não mexe em linhas
+-- que já existem.
+alter table event alter column accent_color set default '#344B9B';
+
+-- OPCIONAL: se você já tinha criado o evento ANTES de aplicar a identidade
+-- Bell & Gui e quer forçar a paleta oficial no registro que já existe
+-- (sobrescrevendo qualquer cor que você tenha customizado nele), descomente
+-- e rode este bloco:
+-- update event set
+--   color_bg = '#F5F2EC', color_surface = '#FFFDF9', color_text = '#050D73',
+--   accent_color = '#344B9B', color_accent_soft = '#7185B2',
+--   color_ornamental = '#C99A5B', color_border = '#DFE2EE';
 
 create table if not exists photos (
   id uuid primary key default gen_random_uuid(),

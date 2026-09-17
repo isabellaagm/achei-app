@@ -6,10 +6,9 @@ import { Button, Card, Eyebrow, Label, FieldNote, ErrorText } from '@/components
 
 export function SetupForm() {
   const router = useRouter();
-  const [name, setName] = useState('');
-  const [eventDate, setEventDate] = useState('');
-  const [location, setLocation] = useState('');
-  const [accentColor, setAccentColor] = useState('#C7952A');
+  const [name, setName] = useState('Bell & Gui');
+  const [eventDate, setEventDate] = useState('2027-04-10');
+  const [location, setLocation] = useState('Villa Vezzane, Mairiporã');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -25,7 +24,7 @@ export function SetupForm() {
       const res = await fetch('/api/event/setup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, eventDate: eventDate || null, location, accentColor, password }),
+        body: JSON.stringify({ name, eventDate: eventDate || null, location, password }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'erro ao criar evento');
@@ -38,34 +37,21 @@ export function SetupForm() {
 
   return (
     <div className="flex-1 px-5 pb-14 pt-6">
-      <div className="mb-2 font-display text-xl">achei</div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/brand/bg-monograma.png" alt="" className="mb-3 h-12 w-auto object-contain" />
       <Eyebrow>novo evento</Eyebrow>
       <h2 className="mb-2 text-2xl">Vamos criar a galeria</h2>
-      <p className="mb-4 text-white/70">
-        Essas informações aparecem na página que seus convidados vão ver. Dá pra editar depois.
+      <p className="mb-4 font-body text-ink/70">
+        A identidade visual de Bell &amp; Gui (cores, fontes e o monograma) já vem pronta — dá pra ajustar depois
+        na aba Identidade. Essas informações abaixo aparecem na página que os convidados vão ver.
       </p>
       <Card className="mb-4">
         <Label>Nome do evento</Label>
-        <input
-          type="text"
-          className="mb-3.5"
-          placeholder="Casamento Isabella & João"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+        <input type="text" className="mb-3.5" value={name} onChange={(e) => setName(e.target.value)} />
         <Label>Data</Label>
         <input type="date" className="mb-3.5" value={eventDate} onChange={(e) => setEventDate(e.target.value)} />
         <Label>Local</Label>
-        <input
-          type="text"
-          className="mb-3.5"
-          placeholder="Villa Vezzane, Mairiporã"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-        />
-        <Label>Cor de destaque</Label>
-        <input type="color" value={accentColor} onChange={(e) => setAccentColor(e.target.value)} />
-        <FieldNote>Isso pinta o brilho da página do evento.</FieldNote>
+        <input type="text" className="mb-3.5" value={location} onChange={(e) => setLocation(e.target.value)} />
         <Label>Senha do organizador</Label>
         <input
           type="password"

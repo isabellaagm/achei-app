@@ -22,7 +22,7 @@ export function ShareTab({ event }: { event: PublicEvent }) {
 
   useEffect(() => {
     if (!link) return;
-    QRCode.toDataURL(`${link}/convidado`, { width: 220, margin: 1, color: { dark: '#14100f', light: '#fff8ed' } })
+    QRCode.toDataURL(`${link}/convidado`, { width: 220, margin: 1, color: { dark: '#050d73', light: '#fffdf9' } })
       .then(setQr)
       .catch(() => setQr(null));
   }, [link]);
@@ -65,12 +65,12 @@ export function ShareTab({ event }: { event: PublicEvent }) {
       {link && (
         <Card className="text-center">
           {qr && (
-            <div className="inline-block rounded-[10px] bg-flash p-4">
+            <div className="inline-block rounded-[10px] bg-surface-raised p-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={qr} alt="QR code do evento" width={200} height={200} />
             </div>
           )}
-          <p className="mt-3.5 break-all font-mono text-xs">{link}/convidado</p>
+          <p className="mt-3.5 break-all font-body text-xs">{link}/convidado</p>
           <Button variant="ghost" onClick={copy} className="mt-3">
             Copiar link
           </Button>

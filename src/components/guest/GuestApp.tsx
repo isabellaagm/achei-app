@@ -6,7 +6,7 @@ import { EventHero, PublicEvent } from '@/components/EventHero';
 import { Button, Card, Eyebrow, StepRail, StatusLine, ErrorText, Empty, Label } from '@/components/ui';
 import { useToast } from '@/components/Toast';
 import { detectFaces, largestFace, type LoadStatus } from '@/lib/human-client';
-import { fileToImage, resizeToCanvas, shareOrDownloadImage } from '@/lib/image-utils';
+import { fileToImage, resizeToCanvas } from '@/lib/image-utils';
 
 type Match = { photoId: string; score: number; thumbUrl: string; downloadUrl: string };
 type Step = 'landing' | 'register' | 'selfie' | 'results';
@@ -167,7 +167,7 @@ export function GuestApp({ event }: { event: PublicEvent }) {
             <StepRail step={1} />
             <Eyebrow>passo 1 de 3</Eyebrow>
             <h2 className="mb-2 text-2xl">Vamos achar suas fotos</h2>
-            <p className="mb-5 text-white/70">
+            <p className="mb-5 text-ink/70">
               Você vai se identificar, tirar uma selfie rápida, e a gente compara com todas as fotos do evento.
               Leva menos de um minuto.
             </p>
@@ -212,7 +212,7 @@ export function GuestApp({ event }: { event: PublicEvent }) {
             <StepRail step={2} />
             <Eyebrow>passo 2 de 3</Eyebrow>
             <h2 className="mb-2 text-2xl">Tire uma selfie</h2>
-            <p className="mb-4 text-white/70">
+            <p className="mb-4 text-ink/70">
               Olhe pra câmera, com boa luz no rosto. A foto não fica pública em lugar nenhum — só usamos pra
               comparar.
             </p>
@@ -222,16 +222,16 @@ export function GuestApp({ event }: { event: PublicEvent }) {
                 autoPlay
                 playsInline
                 muted
-                className="aspect-[3/4] w-full rounded-[14px] border border-white/10 bg-black object-cover"
+                className="aspect-[3/4] w-full rounded-[14px] border border-border bg-black object-cover"
               />
               <div className="mt-3">
                 <Button onClick={capture} disabled={busy}>
                   📸 Capturar
                 </Button>
               </div>
-              <div className="mt-2.5 text-center text-xs text-white/45">
+              <div className="mt-2.5 text-center text-xs text-ink/45">
                 Câmera não funciona?{' '}
-                <label htmlFor="selfie-upload" className="cursor-pointer text-brass-soft underline">
+                <label htmlFor="selfie-upload" className="cursor-pointer text-azul underline">
                   envie uma foto
                 </label>
               </div>
@@ -252,7 +252,7 @@ export function GuestApp({ event }: { event: PublicEvent }) {
                 : 'Ainda não achamos suas fotos'}
             </h2>
             {matches && matches.length > 0 && !confident && (
-              <p className="mb-3 text-white/70">
+              <p className="mb-3 text-ink/70">
                 Não encontramos uma correspondência com boa confiança, mas aqui estão as mais próximas:
               </p>
             )}
@@ -265,19 +265,20 @@ export function GuestApp({ event }: { event: PublicEvent }) {
             {matches && matches.length > 0 && (
               <div className="my-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
                 {matches.map((m) => (
-                  <div key={m.photoId} className="relative overflow-hidden rounded-[10px] border border-white/10 bg-ink">
+                  <div key={m.photoId} className="relative overflow-hidden rounded-[10px] border border-border bg-surface-raised">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={m.thumbUrl} alt="" loading="lazy" className="aspect-square w-full object-cover" />
-                    <span className="absolute right-1.5 top-1.5 rounded-full bg-ink/75 px-1.5 py-0.5 font-mono text-[10px] text-brass-soft backdrop-blur">
+                    <span className="absolute right-1.5 top-1.5 rounded-full bg-black/70 px-1.5 py-0.5 font-body text-[10px] font-semibold text-dourado backdrop-blur">
                       {Math.round(m.score * 100)}%
                     </span>
-                    <button
-                      onClick={() => shareOrDownloadImage(m.downloadUrl, `achei-${m.photoId.slice(0, 8)}.jpg`)}
-                      className="absolute bottom-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-ink/75 text-sm"
-                      title="salvar foto"
+                    <a
+                      href={m.downloadUrl}
+                      download
+                      className="absolute bottom-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-black/70 text-sm text-surface-raised"
+                      title="baixar"
                     >
                       ⬇
-                    </button>
+                    </a>
                   </div>
                 ))}
               </div>

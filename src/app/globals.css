@@ -1,40 +1,108 @@
 @import "tailwindcss";
 
-@theme inline {
-  --font-sans: var(--font-body);
-  --font-display: var(--font-display);
-  --font-mono: var(--font-mono);
+/* ---- fontes da identidade Bell & Gui, auto-hospedadas (sem CDN externo) ---- */
+@font-face {
+  font-family: 'Cinzel';
+  src: url('/fonts/Cinzel-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cinzel';
+  src: url('/fonts/Cinzel-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cinzel';
+  src: url('/fonts/Cinzel-Black.otf') format('opentype');
+  font-weight: 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cinzel Decorative';
+  src: url('/fonts/CinzelDecorative-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cinzel Decorative';
+  src: url('/fonts/CinzelDecorative-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'New Icon Script';
+  src: url('/fonts/New-Icon-Script.otf') format('opentype');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Montserrat';
+  src: url('/fonts/montserrat-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Montserrat';
+  src: url('/fonts/montserrat-latin-500-normal.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Montserrat';
+  src: url('/fonts/montserrat-latin-600-normal.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Montserrat';
+  src: url('/fonts/montserrat-latin-700-normal.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
 
-  --color-ink: #14100f;
-  --color-plum: #241521;
-  --color-plum-2: #33202f;
-  --color-brass: #c7952a;
-  --color-brass-soft: #e8c877;
-  --color-flash: #fff8ed;
-  --color-rose: #a8717a;
-  --color-danger: #e28b8b;
+@theme inline {
+  --font-display: 'Cinzel', 'Times New Roman', serif;
+  --font-body: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+  --font-script: 'New Icon Script', 'Segoe Script', 'Brush Script MT', cursive;
+
+  /* Tokens da identidade "Bell & Gui" — nomes e valores espelham o design
+     system oficial deles (tokens.json) de propósito, pra bater 1:1. Os
+     valores aqui são o padrão; o layout raiz sobrescreve com o que estiver
+     salvo no evento (editável pelo painel, aba Identidade). */
+  --color-surface: #f5f2ec;
+  --color-surface-raised: #fffdf9;
+  --color-ink: #050d73;
+  --color-azul: #344b9b;
+  --color-azul-claro: #7185b2;
+  --color-dourado: #c99a5b;
+  --color-border: #dfe2ee;
+  --color-danger: #b3564a;
 }
 
 body {
-  background: var(--color-ink);
+  background: var(--color-surface);
 }
 
 ::selection {
-  background: var(--color-brass);
+  background: var(--color-dourado);
   color: var(--color-ink);
 }
 
 h1, h2, h3 {
   font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
-/* ---- assinatura visual: borda perfurada de ticket de cinema/fotomatic ---- */
-.ticket-edge {
-  height: 10px;
-  background: radial-gradient(circle at 8px 5px, var(--color-ink) 4px, transparent 4.5px) repeat-x;
-  background-size: 16px 10px;
+/* ---- assinatura visual: o cordão de três dobras como divisor ---- */
+.cordao-divider {
+  background: url('/brand/cordao-tres-dobras-dourado.png') center / contain no-repeat;
+  height: 28px;
+  width: 100%;
+  opacity: 0.9;
 }
 
 input[type='text'],
@@ -43,30 +111,31 @@ input[type='date'],
 input[type='password'],
 textarea {
   width: 100%;
-  background: var(--color-ink);
-  border: 1px solid rgba(255, 248, 237, 0.14);
-  color: var(--color-flash);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  color: var(--color-ink);
   border-radius: 10px;
   padding: 13px 14px;
   font-size: 15px;
+  font-family: var(--font-body);
 }
 input[type='text']:focus,
 input[type='tel']:focus,
 input[type='date']:focus,
 input[type='password']:focus,
 textarea:focus {
-  outline: 2px solid var(--color-brass-soft);
+  outline: 2px solid var(--color-azul-claro);
   outline-offset: 1px;
 }
 input::placeholder,
 textarea::placeholder {
-  color: rgba(255, 248, 237, 0.35);
+  color: color-mix(in srgb, var(--color-ink) 40%, transparent);
 }
 
 input[type='color'] {
-  width: 44px;
-  height: 44px;
-  border: none;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--color-border);
   background: none;
   padding: 0;
   cursor: pointer;
@@ -83,8 +152,8 @@ input[type='color'] {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 248, 237, 0.14);
-  border-top-color: var(--color-brass);
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-azul);
   animation: spin 0.8s linear infinite;
   flex-shrink: 0;
 }
