@@ -32,7 +32,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
       (photos || []).map(async (p) => ({
         photoId: p.id,
         thumbUrl: await getDownloadUrl(p.thumb_key, 3600),
-        downloadUrl: await getDownloadUrl(p.original_key, 3600),
+        downloadUrl: await getDownloadUrl(p.original_key, 3600, `foto-${p.id}.jpg`),
       }))
     );
 
