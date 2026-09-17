@@ -44,14 +44,12 @@ export function EventHero({ event, compact = false }: { event: PublicEventShape;
                 <Image src={event.coverUrl} alt="capa do evento" fill className="object-cover" unoptimized />
               </div>
             ) : (
-              <div className="relative mt-5 aspect-[16/10] w-full overflow-hidden rounded-[16px] border border-border bg-surface-raised">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/brand/altar-cerimonia.png"
-                  alt=""
-                  className="h-full w-full object-cover opacity-90"
-                />
-              </div>
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src="/brand/altar-cerimonia.png"
+                alt=""
+                className="mt-5 h-auto w-full max-w-full"
+              />
             )}
           </>
         )}
