@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Empty, StatusLine } from '@/components/ui';
+import { shareOrDownloadImage } from '@/lib/image-utils';
 
 type GuestPhoto = { photoId: string; thumbUrl: string; downloadUrl: string };
 
@@ -59,14 +60,13 @@ export function GuestPhotosModal({
               <div key={p.photoId} className="relative overflow-hidden rounded-[10px] border border-border bg-surface">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={p.thumbUrl} alt="" loading="lazy" className="aspect-square w-full object-cover" />
-                <a
-                  href={p.downloadUrl}
-                  download
+                <button
+                  onClick={() => shareOrDownloadImage(p.downloadUrl, `foto-${p.photoId}.jpg`)}
                   className="absolute bottom-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-black/70 text-sm text-surface-raised"
-                  title="baixar"
+                  title="salvar"
                 >
                   ⬇
-                </a>
+                </button>
               </div>
             ))}
           </div>

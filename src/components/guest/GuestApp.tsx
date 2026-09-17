@@ -6,7 +6,7 @@ import { EventHero, PublicEvent } from '@/components/EventHero';
 import { Button, Card, Eyebrow, StepRail, StatusLine, ErrorText, Empty, Label } from '@/components/ui';
 import { useToast } from '@/components/Toast';
 import { detectFaces, largestFace, type LoadStatus } from '@/lib/human-client';
-import { fileToImage, resizeToCanvas } from '@/lib/image-utils';
+import { fileToImage, resizeToCanvas, shareOrDownloadImage } from '@/lib/image-utils';
 
 type Match = { photoId: string; score: number; thumbUrl: string; downloadUrl: string };
 type RosterGuest = { id: string; name: string };
@@ -298,14 +298,13 @@ export function GuestApp({ event }: { event: PublicEvent }) {
                     <span className="absolute right-1.5 top-1.5 rounded-full bg-black/70 px-1.5 py-0.5 font-body text-[10px] font-semibold text-dourado backdrop-blur">
                       {Math.round(m.score * 100)}%
                     </span>
-                    <a
-                      href={m.downloadUrl}
-                      download
+                    <button
+                      onClick={() => shareOrDownloadImage(m.downloadUrl, `foto-${m.photoId}.jpg`)}
                       className="absolute bottom-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-black/70 text-sm text-surface-raised"
-                      title="baixar"
+                      title="salvar"
                     >
                       ⬇
-                    </a>
+                    </button>
                   </div>
                 ))}
               </div>

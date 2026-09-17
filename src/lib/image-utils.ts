@@ -36,3 +36,36 @@ export async function uploadToSignedUrl(url: string, blob: Blob, contentType: st
   const res = await fetch(url, { method: 'PUT', headers: { 'Content-Type': contentType }, body: blob });
   if (!res.ok) throw new Error(`Falha no upload (${res.status})`);
 }
+
+/**
+ * Salva uma foto no celular do jeito que vai pra galeria de verdade (não pra
+ * pasta de Arquivos). Em telas de toque (celular/tablet) com suporte a
+ * compartilhar arquivos, abre a folha de compartilhamento nativa — a pessoa
+ * escolhe "Salvar imagem" e cai na galeria. Sem esse suporte (a maioria dos
+ * computadores, ou navegador antigo), cai no download comum de sempre.
+ */
+export async function shareOrDownloadImage(url: string, filename: string) {
+  const isTouchDevice =
+    typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+
+  if (isTouchDevice && typeof navigator !== 'undefined' && navigator.canShare) {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file] });
+        return; // compartilhado, ou a pessoa cancelou — de qualquer forma, não força download
+      }
+    } catch {
+      // fetch/compartilhamento falhou — cai no download comum abaixo
+    }
+  }
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
