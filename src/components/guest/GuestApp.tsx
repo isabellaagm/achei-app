@@ -7,13 +7,17 @@ import { Button, Card, Eyebrow, StepRail, StatusLine, ErrorText, Empty, Label } 
 import { useToast } from '@/components/Toast';
 import { detectFaces, largestFace, type LoadStatus } from '@/lib/human-client';
 import { fileToImage, resizeToCanvas, shareOrDownloadImage } from '@/lib/image-utils';
+import { loadSavedGuest, saveGuest, clearSavedGuest, type SavedGuest } from '@/lib/guest-storage';
 
-type Match = { photoId: string; score: number; thumbUrl: string; downloadUrl: string };
+type Match = { photoId: string; score?: number; thumbUrl: string; downloadUrl: string };
+type GalleryPhoto = { id: string; thumbUrl: string; downloadUrl: string };
 type RosterGuest = { id: string; name: string };
 type Step = 'landing' | 'select-name' | 'selfie' | 'results';
+type ResultsTab = 'mine' | 'all';
 
 export function GuestApp({ event }: { event: PublicEvent }) {
   const [step, setStep] = useState<Step>('landing');
+  const [savedGuest, setSavedGuest] = useState<SavedGuest | null>(null);
   const [roster, setRoster] = useState<RosterGuest[] | null>(null);
   const [search, setSearch] = useState('');
   const [guestId, setGuestId] = useState<string | null>(null);
@@ -26,8 +30,18 @@ export function GuestApp({ event }: { event: PublicEvent }) {
   const [err, setErr] = useState('');
   const toast = useToast();
 
+  const [resultsTab, setResultsTab] = useState<ResultsTab>('mine');
+  const [allPhotos, setAllPhotos] = useState<GalleryPhoto[]>([]);
+  const [allPhotosTotal, setAllPhotosTotal] = useState(0);
+  const [allPhotosLoading, setAllPhotosLoading] = useState(false);
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSavedGuest(loadSavedGuest());
+  }, []);
 
   useEffect(() => {
     if (step !== 'select-name' || roster !== null) return;
@@ -76,6 +90,39 @@ export function GuestApp({ event }: { event: PublicEvent }) {
     setStep('selfie');
   }
 
+  function startNewSelfie(id: string, name: string) {
+    setGuestId(id);
+    setGuestName(name);
+    setErr('');
+    setStep('selfie');
+  }
+
+  async function viewMyPhotosAgain(g: SavedGuest) {
+    setGuestId(g.id);
+    setGuestName(g.name);
+    setBusy(true);
+    setBusyMsg('Carregando suas fotos…');
+    try {
+      const res = await fetch(`/api/guests/${g.id}/my-photos`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'erro ao carregar');
+      setMatches(data.photos);
+      setConfident(true);
+      setResultsTab('mine');
+      setStep('results');
+    } catch {
+      toast('Não consegui carregar suas fotos — tenta tirar uma selfie nova');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function forgetThisDevice() {
+    clearSavedGuest();
+    setSavedGuest(null);
+    setStep('select-name');
+  }
+
   async function runMatch(canvas: HTMLCanvasElement) {
     setBusy(true);
     setErr('');
@@ -99,7 +146,13 @@ export function GuestApp({ event }: { event: PublicEvent }) {
       if (!res.ok) throw new Error(data.error || 'erro ao comparar');
       setMatches(data.matches);
       setConfident(data.confident);
+      setResultsTab('mine');
       setStep('results');
+      if (guestId) {
+        const saved = { id: guestId, name: guestName };
+        saveGuest(saved);
+        setSavedGuest(saved);
+      }
     } catch (e) {
       setErr(
         (e instanceof Error ? e.message : 'erro') +
@@ -116,9 +169,6 @@ export function GuestApp({ event }: { event: PublicEvent }) {
       toast('Câmera ainda não está pronta');
       return;
     }
-    // A pré-visualização é espelhada só visualmente (CSS); o frame real
-    // capturado aqui vem direto do stream, sem espelhar — é o que garante
-    // a melhor comparação no reconhecimento facial.
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -160,6 +210,25 @@ export function GuestApp({ event }: { event: PublicEvent }) {
     }
   }
 
+  async function loadAllPhotos() {
+    setAllPhotosLoading(true);
+    try {
+      const res = await fetch(`/api/photos/public?limit=30&offset=${allPhotos.length}`);
+      const data = await res.json();
+      setAllPhotos((prev) => [...prev, ...(data.photos || [])]);
+      setAllPhotosTotal(data.total || 0);
+    } catch {
+      toast('Não consegui carregar a galeria');
+    } finally {
+      setAllPhotosLoading(false);
+    }
+  }
+
+  function openAllPhotosTab() {
+    setResultsTab('all');
+    if (allPhotos.length === 0) loadAllPhotos();
+  }
+
   return (
     <div className="flex flex-1 flex-col">
       {step === 'landing' && <EventHero event={event} />}
@@ -168,12 +237,39 @@ export function GuestApp({ event }: { event: PublicEvent }) {
           <>
             <StepRail step={1} />
             <Eyebrow>passo 1 de 3</Eyebrow>
-            <h2 className="mb-2 text-2xl">Vamos achar suas fotos</h2>
-            <p className="mb-5 text-ink/70">
-              Você escolhe seu nome na lista, tira uma selfie rápida, e a gente compara com todas as fotos do
-              evento. Leva menos de um minuto.
-            </p>
-            <Button onClick={() => setStep('select-name')}>Começar</Button>
+            {savedGuest ? (
+              <>
+                <h2 className="mb-2 text-2xl">Bem-vindo(a) de volta, {savedGuest.name.split(' ')[0]}!</h2>
+                <p className="mb-5 text-ink/70">Já sabemos quem você é nesse aparelho.</p>
+                <Button onClick={() => viewMyPhotosAgain(savedGuest)} disabled={busy}>
+                  Ver minhas fotos
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="mt-2.5"
+                  onClick={() => startNewSelfie(savedGuest.id, savedGuest.name)}
+                  disabled={busy}
+                >
+                  📸 Tirar uma selfie nova
+                </Button>
+                <button
+                  onClick={forgetThisDevice}
+                  className="mt-4 block w-full text-center font-body text-xs text-ink/45 underline"
+                >
+                  Não é você? Trocar de pessoa
+                </button>
+                {busy && <StatusLine>{busyMsg}</StatusLine>}
+              </>
+            ) : (
+              <>
+                <h2 className="mb-2 text-2xl">Vamos achar suas fotos</h2>
+                <p className="mb-5 text-ink/70">
+                  Você escolhe seu nome na lista, tira uma selfie rápida, e a gente compara com todas as fotos
+                  do evento. Leva menos de um minuto.
+                </p>
+                <Button onClick={() => setStep('select-name')}>Começar</Button>
+              </>
+            )}
             <Link href="/" className="mt-2.5 block">
               <Button variant="ghost">← voltar</Button>
             </Link>
@@ -273,49 +369,108 @@ export function GuestApp({ event }: { event: PublicEvent }) {
           <>
             <StepRail step={3} />
             <Eyebrow>passo 3 de 3</Eyebrow>
-            <h2 className="mb-3 text-2xl">
-              {matches && matches.length && confident
-                ? `Achamos ${matches.length} foto${matches.length > 1 ? 's' : ''} sua${matches.length > 1 ? 's' : ''} 🎉`
-                : 'Ainda não achamos suas fotos'}
-            </h2>
-            {matches && matches.length > 0 && !confident && (
-              <p className="mb-3 text-ink/70">
-                Não encontramos uma correspondência com boa confiança, mas aqui estão as mais próximas:
-              </p>
-            )}
-            {(!matches || matches.length === 0) && (
-              <Empty>
-                Nenhuma foto no evento tem seu rosto ainda (ou o organizador ainda não enviou as fotos). Toque em
-                atualizar daqui a pouco.
-              </Empty>
-            )}
-            {matches && matches.length > 0 && (
-              <div className="my-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-                {matches.map((m) => (
-                  <div key={m.photoId} className="relative overflow-hidden rounded-[10px] border border-border bg-surface-raised">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={m.thumbUrl} alt="" loading="lazy" className="aspect-square w-full object-cover" />
-                    <span className="absolute right-1.5 top-1.5 rounded-full bg-black/70 px-1.5 py-0.5 font-body text-[10px] font-semibold text-dourado backdrop-blur">
-                      {Math.round(m.score * 100)}%
-                    </span>
-                    <button
-                      onClick={() => shareOrDownloadImage(m.downloadUrl, `foto-${m.photoId}.jpg`)}
-                      className="absolute bottom-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-black/70 text-sm text-surface-raised"
-                      title="salvar"
-                    >
-                      ⬇
-                    </button>
+
+            <div className="mb-4 flex gap-2">
+              <button
+                onClick={() => setResultsTab('mine')}
+                className={`flex-1 rounded-full border px-3 py-2 font-body text-sm font-medium transition ${
+                  resultsTab === 'mine' ? 'border-azul bg-azul text-surface-raised' : 'border-border text-ink/60'
+                }`}
+              >
+                Minhas fotos
+              </button>
+              <button
+                onClick={openAllPhotosTab}
+                className={`flex-1 rounded-full border px-3 py-2 font-body text-sm font-medium transition ${
+                  resultsTab === 'all' ? 'border-azul bg-azul text-surface-raised' : 'border-border text-ink/60'
+                }`}
+              >
+                Todas as fotos
+              </button>
+            </div>
+
+            {resultsTab === 'mine' && (
+              <>
+                <h2 className="mb-3 text-2xl">
+                  {matches && matches.length && confident
+                    ? `Achamos ${matches.length} foto${matches.length > 1 ? 's' : ''} sua${matches.length > 1 ? 's' : ''} 🎉`
+                    : 'Ainda não achamos suas fotos'}
+                </h2>
+                {matches && matches.length > 0 && !confident && (
+                  <p className="mb-3 text-ink/70">
+                    Não encontramos uma correspondência com boa confiança, mas aqui estão as mais próximas:
+                  </p>
+                )}
+                {(!matches || matches.length === 0) && (
+                  <Empty>
+                    Nenhuma foto no evento tem seu rosto ainda (ou o organizador ainda não enviou as fotos). Toque
+                    em atualizar daqui a pouco.
+                  </Empty>
+                )}
+                {matches && matches.length > 0 && (
+                  <div className="my-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                    {matches.map((m) => (
+                      <div key={m.photoId} className="relative overflow-hidden rounded-[10px] border border-border bg-surface-raised">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={m.thumbUrl} alt="" loading="lazy" className="aspect-square w-full object-cover" />
+                        {typeof m.score === 'number' && (
+                          <span className="absolute right-1.5 top-1.5 rounded-full bg-black/70 px-1.5 py-0.5 font-body text-[10px] font-semibold text-dourado backdrop-blur">
+                            {Math.round(m.score * 100)}%
+                          </span>
+                        )}
+                        <button
+                          onClick={() => shareOrDownloadImage(m.downloadUrl, `foto-${m.photoId}.jpg`)}
+                          className="absolute bottom-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-black/70 text-sm text-surface-raised"
+                          title="salvar"
+                        >
+                          ⬇
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                )}
+                <Button variant="ghost" onClick={refresh} disabled={busy}>
+                  🔄 Atualizar (buscar de novo)
+                </Button>
+              </>
             )}
-            <Button variant="ghost" onClick={refresh} disabled={busy}>
-              🔄 Atualizar (buscar de novo)
-            </Button>
+
+            {resultsTab === 'all' && (
+              <>
+                <h2 className="mb-3 text-2xl">Todas as fotos do casamento</h2>
+                {allPhotos.length === 0 && !allPhotosLoading && (
+                  <Empty>Nenhuma foto enviada ainda.</Empty>
+                )}
+                {allPhotos.length > 0 && (
+                  <div className="my-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                    {allPhotos.map((p) => (
+                      <div key={p.id} className="relative overflow-hidden rounded-[10px] border border-border bg-surface-raised">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={p.thumbUrl} alt="" loading="lazy" className="aspect-square w-full object-cover" />
+                        <button
+                          onClick={() => shareOrDownloadImage(p.downloadUrl, `foto-${p.id}.jpg`)}
+                          className="absolute bottom-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-black/70 text-sm text-surface-raised"
+                          title="salvar"
+                        >
+                          ⬇
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {allPhotosLoading && <StatusLine>Carregando…</StatusLine>}
+                {!allPhotosLoading && allPhotos.length < allPhotosTotal && (
+                  <Button variant="ghost" onClick={loadAllPhotos}>
+                    Carregar mais
+                  </Button>
+                )}
+              </>
+            )}
+
             <Link href="/" className="mt-2.5 block">
               <Button variant="ghost">← voltar ao início</Button>
             </Link>
-            {busy && <StatusLine>{busyMsg}</StatusLine>}
+            {busy && resultsTab === 'mine' && <StatusLine>{busyMsg}</StatusLine>}
           </>
         )}
       </div>
